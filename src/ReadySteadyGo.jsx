@@ -1,4 +1,13 @@
 import React from "react";
+import styled from 'styled-components'
+
+export const Counter = styled.div`
+    display: inline-block;
+    margin: 5rem 0 0;
+    color: orange;
+    font-weight: 700;
+    font-size: 7rem;
+`
 
 class ReadySteadyGo extends React.Component {
 
@@ -6,31 +15,25 @@ class ReadySteadyGo extends React.Component {
         countdown: 3
     }
 
-    componentWillUnmount() {
-        clearInterval(this.timeout);
-        clearTimeout(this.timeout2);
-    }
-
     pageToReturn = () => {
         if (this.props.pageOpen === "ReadySteadyGo") {
             this.timeout =  setTimeout(() => {
+                if (this.state.countdown === 1) {
+                    this.props.changePage("MainPage")
+                    this.setState({ countdown: 4 })
+                    clearTimeout(this.timeout)
+                }
                 this.setState(state => ({ countdown: state.countdown - 1 }))
             }, 1000)
 
-            this.timeout2 = setTimeout(() => {
-                this.props.changePage("MainPage")
-            }, 3000)
-
             return this.state.countdown
-        } else {
-            return null
         }
     }
 
     render() {
         return (
             <>
-                {this.pageToReturn()}
+                <Counter>{this.pageToReturn()}</Counter>
             </>
         )
     }

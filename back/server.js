@@ -15,7 +15,7 @@ class Game {
         }
     }
 
-    calculateWinner() {
+    calculateWinner = () => {
         const lines = [
             [0, 1, 2],
             [3, 4, 5],
@@ -37,7 +37,7 @@ class Game {
     }
 }
 
-const games = []
+let games = []
 
 server.on('connection', ws => {
     ws.id = uniqid()
@@ -66,7 +66,8 @@ server.on('connection', ws => {
                     g.openToEnter = false
                     server.clients.forEach(client => {
                         if (client.readyState === WebSocket.OPEN && (client.id === g.playerX || client.id === g.playerO)) {
-                            client.send(JSON.stringify({ message: 'confirmed' }))
+                            client.send(JSON.stringify({ message: 'confirmed', gameId: g.id }))
+                            client.gameId = g.id
                         }
                     })
                     foundSuchGame = true
@@ -81,9 +82,34 @@ server.on('connection', ws => {
                 if (g.id === payload.gameId) {
                     const playerMark = g.playerX === ws.id ? 'X' : 'O'
                     if (!g.gameProcess.winner && !g.gameProcess.squares[payload.i]) {
-                        g.gameProcess.squares[payload.i] = playerMark
+                        if (g.gameProcess.xIsNext && playerMark === 'X' || !g.gameProcess.xIsNext && playerMark === 'O') {
+                            g.gameProcess.squares[payload.field] = playerMark
 
-                        g.calculateWinner()
+                            g.gameProcess.xIsNext = !g.gameProcess.xIsNext
+                            g.calculateWinner()
+
+                            server.clients.forEach(client => {
+                                if (client.readyState === WebSocket.OPEN && (client.id === g.playerX || client.id === g.playerO)) {
+                                    client.send(JSON.stringify({ gameProcess: g.gameProcess }))
+                                }
+                            })
+                        }
+                    }
+                }
+            })
+        }
+
+        if (payload.method === "retry") {
+            // restart the game
+            games.forEach(g => {
+                if (g.id === payload.gameId) {
+                    if (g.gameProcess.winner) {
+
+                        g.gameProcess = {
+                            squares: Array(9).fill(null),
+                            xIsNext: true,
+                            winner: false
+                        }
 
                         server.clients.forEach(client => {
                             if (client.readyState === WebSocket.OPEN && (client.id === g.playerX || client.id === g.playerO)) {
@@ -94,5 +120,38 @@ server.on('connection', ws => {
                 }
             })
         }
+
+        if (payload.method === "quit") {
+            // quit the game
+            games.forEach((g, index, array) => {
+                if (g.id === payload.gameId) {
+                    games = array.filter(game => game.id !== payload.gameId)
+
+                    server.clients.forEach(client => {
+                        if (client.readyState === WebSocket.OPEN && (client.id === g.playerX || client.id === g.playerO)) {
+                            client.send(JSON.stringify({ message: 'gameOver' }))
+                            client.gameId = ''
+                        }
+                    })
+                }
+            })
+        }
     })
+
+    // ws.on('close', () => {
+    //     if (ws.gameId) {
+    //         games.forEach((g, index, array) => {
+    //             if (g.id === ws.gameId) {
+    //                 games = array.filter(game => game.id !== g.id)
+    //
+    //                 server.clients.forEach(client => {
+    //                     if (client.readyState === WebSocket.OPEN && (client.id === g.playerX || client.id === g.playerO)) {
+    //                         client.send(JSON.stringify({ message: 'gameOver' }))
+    //                         client.gameId = ''
+    //                     }
+    //                 })
+    //             }
+    //         })
+    //     }
+    // })
 })

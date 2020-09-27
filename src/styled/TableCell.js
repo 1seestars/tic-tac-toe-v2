@@ -1,6 +1,6 @@
 import styled from 'styled-components'
 
-export const TableCell = styled.td`
+const TableCell = styled.td`
   width: 5rem;
   height: 5rem;
   background: transparent;
