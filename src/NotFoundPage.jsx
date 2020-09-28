@@ -26,7 +26,7 @@ const NotFoundPage = ({ pageOpen, changePage }) => {
 
     return (
         <>
-            <h2 style={{ color: "white", marginBottom: "5rem" }}>Sorry, there's no game with such identifier! Please, try again or go back to home page</h2>
+            <h2 style={{ color: "white", marginBottom: "3rem" }}>Sorry, there's no game with such identifier! Please, try again or go back to home page</h2>
             <Button onClick={() => changePage("StartPage")}>Home</Button>
         </>
     );
